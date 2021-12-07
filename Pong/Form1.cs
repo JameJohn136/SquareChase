@@ -1,4 +1,5 @@
-﻿using System;
+﻿// 2-Player "Square Chase" by James Johnson
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -7,45 +8,63 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Media;
 
 namespace Pong
 {
     public partial class Form1 : Form
     {
-        Rectangle player1 = new Rectangle(10, 170, 10, 60);
-        Rectangle player2 = new Rectangle(580, 170, 10, 60);
+        // Declaring all the global variables
+        Rectangle player1 = new Rectangle(100, 100, 25, 25);
+        Rectangle player2 = new Rectangle(150, 150, 25, 25);
         Rectangle ball = new Rectangle(295, 195, 10, 10);
+        Rectangle speedBoost = new Rectangle(295, 195, 10, 10);
+        Rectangle area = new Rectangle(75, 75, 300, 300);
+
+        SoundPlayer speedSound = new SoundPlayer(Properties.Resources.speedSound);
+        SoundPlayer pointSound = new SoundPlayer(Properties.Resources.pointSound);
 
         int player1Score = 0;
         int player2Score = 0;
 
-        int playerSpeed = 4;
-        int ballXSpeed = -6;
-        int ballYSpeed = 6;
+        int player1Speed = 3;
+        int player2Speed = 3;
 
         bool wDown = false;
         bool sDown = false;
+        bool dDown = false;
+        bool aDown = false;
         bool upArrowDown = false;
         bool downArrowDown = false;
+        bool leftArrowDown = false;
+        bool rightArrowDown = false;
 
         SolidBrush blueBrush = new SolidBrush(Color.DodgerBlue);
         SolidBrush whiteBrush = new SolidBrush(Color.White);
+        SolidBrush redBrush = new SolidBrush(Color.Red);
+        SolidBrush greenBrush = new SolidBrush(Color.LawnGreen);
+        Pen whitePen = new Pen(Color.White, 3);
+
+        Random randGen = new Random(); // Generate Random Numbers
 
         public Form1()
         {
-
             InitializeComponent();
 
-        }
+            // Make the Score Labels show 0
+            p1ScoreLabel.Text = $"{player1Score}";
+            p2ScoreLabel.Text = $"{player2Score}";
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
+            // Find random positions for the objectives
+            speedBoost.X = randGen.Next(75, 351);
+            speedBoost.Y = randGen.Next(75, 351);
+            ball.X = randGen.Next(75, 351);
+            ball.Y = randGen.Next(75, 351);
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            switch (e.KeyCode)
+            switch (e.KeyCode) // Get Input
             {
                 case Keys.W:
                     wDown = true;
@@ -53,19 +72,31 @@ namespace Pong
                 case Keys.S:
                     sDown = true;
                     break;
+                case Keys.D:
+                    dDown = true;
+                    break;
+                case Keys.A:
+                    aDown = true;
+                    break;
                 case Keys.Up:
                     upArrowDown = true;
                     break;
                 case Keys.Down:
                     downArrowDown = true;
                     break;
+                case Keys.Left:
+                    leftArrowDown = true;
+                    break;
+                case Keys.Right:
+                    rightArrowDown = true;
+                    break;
             }
         }
-    
+
         private void Form1_KeyUp(object sender, KeyEventArgs e)
 
         {
-            switch (e.KeyCode)
+            switch (e.KeyCode) // Getting Input part 2
             {
                 case Keys.W:
                     wDown = false;
@@ -73,93 +104,108 @@ namespace Pong
                 case Keys.S:
                     sDown = false;
                     break;
+                case Keys.D:
+                    dDown = false;
+                    break;
+                case Keys.A:
+                    aDown = false;
+                    break;
                 case Keys.Up:
                     upArrowDown = false;
                     break;
                 case Keys.Down:
                     downArrowDown = false;
                     break;
+                case Keys.Left:
+                    leftArrowDown = false;
+                    break;
+                case Keys.Right:
+                    rightArrowDown = false;
+                    break;
             }
 
         }
 
         private void gameTimer_Tick(object sender, EventArgs e)
-        {   
-            //move ball 
-            ball.X += ballXSpeed;
-            ball.Y += ballYSpeed;
+        {
+            // Always update the scores
+            p1ScoreLabel.Text = player1Score.ToString();
+            p2ScoreLabel.Text = player2Score.ToString();
 
             //move player 1 
-            if (wDown == true && player1.Y > 0)
+            if (wDown == true && player1.Y > 75)
             {
-                player1.Y -= playerSpeed;
+                player1.Y -= player1Speed;
             }
 
-            if (sDown == true && player1.Y < this.Height - player1.Height)
+            if (sDown == true && player1.Y < 350)
             {
-                player1.Y += playerSpeed;
+                player1.Y += player1Speed;
+            }
+
+            if (aDown == true && player1.X > 75)
+            {
+                player1.X -= player1Speed;
+            }
+
+            if (dDown && player1.X < 350)
+            {
+                player1.X += player1Speed;
             }
 
             //move player 2 
-            if (upArrowDown == true && player2.Y > 0)
+            if (upArrowDown == true && player2.Y > 75)
             {
-                player2.Y -= playerSpeed;
+                player2.Y -= player2Speed;
             }
 
-            if (downArrowDown == true && player2.Y < this.Height - player2.Height)
+            if (downArrowDown == true && player2.Y < 350)
             {
-                player2.Y += playerSpeed;
+                player2.Y += player2Speed;
             }
-            //check if ball hit top or bottom wall and change direction if it does 
-            if (ball.Y < 0 || ball.Y > this.Height - ball.Height)
+
+            if (leftArrowDown == true && player2.X > 75)
             {
-                ballYSpeed *= -1;  // or: ballYSpeed = -ballYSpeed; 
+                player2.X -= player2Speed;
             }
+
+            if (rightArrowDown && player2.X < 350)
+            {
+                player2.X += player2Speed;
+            }
+
             //check if ball hits either player. If it does change the direction 
             //and place the ball in front of the player hit 
             if (player1.IntersectsWith(ball))
             {
-                ballXSpeed *= -1;
-                ball.X = player1.X + ball.Width;
+                // Call a seperate method that we input two variables to tell it what it needs to do
+                SpawnNewBall("ball", 1);
+            }
+            else if (player1.IntersectsWith(speedBoost))
+            {
+                SpawnNewBall("speed", 1);
             }
             else if (player2.IntersectsWith(ball))
             {
-                ballXSpeed *= -1;
-                ball.X = player2.X - ball.Width;
+                SpawnNewBall("ball", 2);
             }
-            //check if a player missed the ball and if true add 1 to score of other player  
-            if (ball.X < 0)
+            else if (player2.IntersectsWith(speedBoost))
             {
-                player2Score++;
-                p2ScoreLabel.Text = $"{player2Score}";
-
-                ball.X = 295;
-                ball.Y = 195;
-
-                player1.Y = 170;
-                player2.Y = 170;
+                SpawnNewBall("speed", 2);
             }
-            else if (ball.X > 600)
-            {
-                player1Score++;
-                p1ScoreLabel.Text = $"{player1Score}";
 
-                ball.X = 295;
-                ball.Y = 195;
-
-                player1.Y = 170;
-                player2.Y = 170;
-            }
-            // check score and stop game if either player is at 3 
-            if (player1Score == 3)
+            // check score and stop game if either player is at 10 
+            if (player1Score == 10)
             {
                 gameTimer.Enabled = false;
                 winLabel.Visible = true;
+                p1ScoreLabel.Text = "10";
                 winLabel.Text = "Player 1  Wins!!";
             }
-            else if (player2Score == 3)
+            else if (player2Score == 10)
             {
                 gameTimer.Enabled = false;
+                p2ScoreLabel.Text = "10";
                 winLabel.Visible = true;
                 winLabel.Text = "Player 2  Wins!!";
             }
@@ -167,21 +213,60 @@ namespace Pong
         }
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            
-                e.Graphics.FillRectangle(blueBrush, player1);
-                e.Graphics.FillRectangle(blueBrush, player2);
-                e.Graphics.FillRectangle(whiteBrush, ball);
-
-            
+            // Paint the objects on the screen every frame
+            e.Graphics.FillRectangle(redBrush, player1);
+            e.Graphics.FillRectangle(blueBrush, player2);
+            e.Graphics.FillRectangle(whiteBrush, ball);
+            e.Graphics.DrawRectangle(whitePen, area);
+            e.Graphics.FillRectangle(greenBrush, speedBoost);
+            e.Graphics.DrawRectangle(whitePen, player1);
+            e.Graphics.DrawRectangle(whitePen, player2);
         }
 
-        private void winLabel_Click(object sender, EventArgs e)
+        public void SpawnNewBall(string type, int player) 
         {
+            // I sent in two variables to easily manage all this in one method
+            if (type == "ball")
+            {
+                switch (player)
+                {
+                    case 1:
+                        player1Score++;
+                        break;
+                    case 2:
+                        player2Score++;
+                        break;
+                }
 
-        }
+                pointSound.Play();
 
-        private void p1ScoreLabel_Click(object sender, EventArgs e)
-        {
+                ball.X = randGen.Next(75, 351);
+                ball.Y = randGen.Next(75, 351);
+            }
+
+            if (type == "speed")
+            {
+                switch (player)
+                {
+                    case 1:
+                        if (player1Speed < 10) // Limits the player speed at 10 (3.3x normal speed) because it gets too fast
+                        {
+                        player1Speed++;
+                        }
+                        break;
+                    case 2:
+                        if (player2Speed < 10)
+                        {
+                        player2Speed++;
+                        }
+                        break;
+                }
+
+                speedSound.Play();
+
+                speedBoost.X = randGen.Next(75, 351);
+                speedBoost.Y = randGen.Next(75, 351);
+            }
 
         }
     }
