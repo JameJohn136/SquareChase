@@ -264,6 +264,7 @@ namespace Pong
 
                 speedSound.Play();
 
+                // Move the speed boost
                 speedBoost.X = randGen.Next(75, 351);
                 speedBoost.Y = randGen.Next(75, 351);
             }
