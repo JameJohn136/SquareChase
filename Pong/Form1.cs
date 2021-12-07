@@ -21,6 +21,7 @@ namespace Pong
         Rectangle speedBoost = new Rectangle(295, 195, 10, 10);
         Rectangle area = new Rectangle(75, 75, 300, 300);
 
+        // Declare which sound is which
         SoundPlayer speedSound = new SoundPlayer(Properties.Resources.speedSound);
         SoundPlayer pointSound = new SoundPlayer(Properties.Resources.pointSound);
 
